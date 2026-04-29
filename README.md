@@ -1,4 +1,4 @@
-# CSCI 455/555: GenAI for SD - Assignment 3
+# CSCI 455 - Assignment 3 Bug Fixing Code
 
 ## Overview
 This notebook investigates strategies for teaching small models to fix bugs. It compares three distinct approaches:
