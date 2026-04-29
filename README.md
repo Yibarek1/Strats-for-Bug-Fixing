@@ -1,106 +1,53 @@
-\# CSCI 455/555: GenAI for SD - Assignment 3
+# CSCI 455/555: GenAI for SD - Assignment 3
 
-
-
-\## Overview
-
+## Overview
 This notebook investigates strategies for teaching small models to fix bugs. It compares three distinct approaches:
+- **Pipeline A**: Pre-training on a code corpus followed by fine-tuning on a bug-fixing task.
+- **Pipeline B**: Fine-tuning directly on a bug-fixing task (without pre-training).
+- **Pipeline C**: RAG-based code generation using Qwen 1.5B with FAISS retrieval.
 
-\- \*\*Pipeline A\*\*: Pre-training on a code corpus followed by fine-tuning on a bug-fixing task.
+## How to Install Dependencies and Reproduce Code
 
-\- \*\*Pipeline B\*\*: Fine-tuning directly on a bug-fixing task (without pre-training).
+### Prerequisites
+The code is primarily intended to be run in a **Google Colab** environment with a GPU enabled (`cuda`). It also mounts your Google Drive to back up the resulting output artifacts.
 
-\- \*\*Pipeline C\*\*: RAG-based code generation using Qwen 1.5B with FAISS retrieval.
-
-
-
-\## How to Install Dependencies and Reproduce Code
-
-
-
-\### Prerequisites
-
-The code is primarily intended to be run in a \*\*Google Colab\*\* environment with a GPU enabled (`cuda`). It also mounts your Google Drive to back up the resulting output artifacts.
-
-
-
-\### 1. Install Dependencies
-
+### 1. Install Dependencies
 You can install the strictly required packages using the pip command provided in the notebook:
-
 `pip install -q transformers==4.46.0 tokenizers==0.20.3 sentencepiece==0.1.99 torch datasets sacrebleu codebleu faiss-cpu scikit-learn`
 
-
-
-\### 2. Reproducing the Code
-
+### 2. Reproducing the Code
 To reproduce the experiment completely:
+1. Upload `Assignment_3_Bug_Fixing.ipynb` to Google Colab.
+2. Enable a GPU accelerator (`Runtime` > `Change runtime type` > `Hardware accelerator` -> `T4/L4/A100 GPU`).
+3. Run the notebook sequentially from top to bottom (`Runtime` > `Run all`).
+   - **Note:** A Weights & Biases (W&B) API key is required during execution to track the training progress.
+   - The script pulls datasets directly from Hugging Face (`code_search_net` and `google/code_x_glue_cc_code_refinement`). If Hugging Face is unreachable, the code includes safe fallbacks to automatically generate synthetic datasets.
 
-1\. Upload `Assignment\_3\_Bug\_Fixing.ipynb` to Google Colab.
+---
 
-2\. Enable a GPU accelerator (`Runtime` > `Change runtime type` > `Hardware accelerator` -> `T4/L4/A100 GPU`).
-
-3\. Run the notebook sequentially from top to bottom (`Runtime` > `Run all`).
-
-&#x20;  - \*\*Note:\*\* A Weights \& Biases (W\&B) API key is required during execution to track the training progress.
-
-&#x20;  - The script pulls datasets directly from Hugging Face (`code\_search\_net` and `google/code\_x\_glue\_cc\_code\_refinement`). If Hugging Face is unreachable, the code includes safe fallbacks to automatically generate synthetic datasets.
-
-
-
-\---
-
-
-
-\## Where Outputs are Written
-
-
+## Where Outputs are Written
 
 During execution, all intermediate and final outputs are systematically written to the `/content/outputs/` directory inside your Colab environment. At the very end of the notebook, this entire folder is archived as `outputs.zip` and copied over to your Google Drive root directory (`/content/drive/MyDrive/`).
 
+### Output Directory Structure Overview
+Here is exactly where specific files, metrics, and models are saved:
 
+- **Tokenizer**
+  - Trained sentencepiece model: `/content/outputs/tokenizer.model`
 
-\### Output Directory Structure Overview
+- **Pipeline A Models (Pre-trained & Fine-tuned)**
+  - Pre-training checkpoints: `/content/outputs/pretrain_checkpoints/`
+  - Final pre-trained model: `/content/outputs/model_pretrained/`
+  - Fine-tuning checkpoints: `/content/outputs/finetune_pretrained/checkpoints/`
+  - Final fine-tuned model: `/content/outputs/finetune_pretrained/final_model/`
 
-Any particular files can be found...
+- **Pipeline B Models (Fine-tuned from scratch)**
+  - Fine-tuning checkpoints: `/content/outputs/finetune_scratch/checkpoints/`
+  - Final fine-tuned model: `/content/outputs/finetune_scratch/final_model/`
 
-
-
-\- \*\*Tokenizer\*\*
-
-&#x20; - Trained sentencepiece model: `/content/outputs/tokenizer.model`
-
-
-
-\- \*\*Pipeline A Models (Pre-trained \& Fine-tuned)\*\*
-
-&#x20; - Pre-training checkpoints: `/content/outputs/pretrain\_checkpoints/`
-
-&#x20; - Final pre-trained model: `/content/outputs/model\_pretrained/`
-
-&#x20; - Fine-tuning checkpoints: `/content/outputs/finetune\_pretrained/checkpoints/`
-
-&#x20; - Final fine-tuned model: `/content/outputs/finetune\_pretrained/final\_model/`
-
-
-
-\- \*\*Pipeline B Models (Fine-tuned from scratch)\*\*
-
-&#x20; - Fine-tuning checkpoints: `/content/outputs/finetune\_scratch/checkpoints/`
-
-&#x20; - Final fine-tuned model: `/content/outputs/finetune\_scratch/final\_model/`
-
-
-
-\- \*\*Evaluation \& Summary Metrics\*\*
-
-&#x20; - Comparative results (CSV): `/content/outputs/evaluation\_results.csv`
-
-&#x20; - Comparative results (JSON): `/content/outputs/evaluation\_results.json`
-
-&#x20; - Bar chart visualization (PNG): `/content/outputs/evaluation\_comparison.png`
-
-&#x20; - Comprehensive experiment config \& summary: `/content/outputs/assignment\_summary.json`
-
-&#x20; - 20 example bug fixes generated by the model: `/content/outputs/example\_fixes.json`
-
+- **Evaluation & Summary Metrics**
+  - Comparative results (CSV): `/content/outputs/evaluation_results.csv`
+  - Comparative results (JSON): `/content/outputs/evaluation_results.json`
+  - Bar chart visualization (PNG): `/content/outputs/evaluation_comparison.png`
+  - Comprehensive experiment config & summary: `/content/outputs/assignment_summary.json`
+  - 20 example bug fixes generated by the model: `/content/outputs/example_fixes.json`
